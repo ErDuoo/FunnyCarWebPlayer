@@ -81,7 +81,7 @@
 
 <body>
     <div id="video_content">
-        <video id="rtc_media_player" playsinline disablepictureinpicture>
+        <video id="rtc_media_player" disablepictureinpicture>
             Your browser does not support the video tag.
         </video>
     </div>
@@ -104,10 +104,10 @@
         sdk = new SrsRtcWhipWhepAsync();
 
         var videoElement = document.getElementById('rtc_media_player');
-        enableInlineVideo(videoElement);
-        videoElement.controls = false;
+       // enableInlineVideo(videoElement);
+       // videoElement.controls = false;
         videoElement.srcObject = sdk.stream
-        videoElement.play();
+     //   videoElement.play();
 
         var startBt = document.getElementById("btn_start");
         startBt.addEventListener("click", (e) => {
