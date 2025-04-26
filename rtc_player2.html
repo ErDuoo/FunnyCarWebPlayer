@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #rtc_media_player {
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
+            background: #230d6c;
+        }
+    </style>
+    <script src="js/adapter-7.4.0.min.js"></script>
+    <script src="js/srs.sdk.js"></script>
+</head>
+<body>
+    <video 
+        id="rtc_media_player" 
+        playsinline
+        webkit-playsinline 
+        x5-playsinline 
+        ></video>
+
+<script>
+(function(){
+    let sdk = null;
+    const video = document.getElementById('rtc_media_player');
+
+    
+    // 暴露给Flutter的全局播放方法
+    window.startPlay = function() {
+        if (!sdk) {
+            initPlayer();ß
+        }
+        video.play();
+        video.muted = false;
+    };
+
+    // 初始化播放器（不自动播放）
+    function initPlayer() {
+        video.muted = true;
+        sdk = new SrsRtcPlayerAsync();
+        video.srcObject = sdk.stream;
+
+
+        const query = new URLSearchParams(location.search);
+        const streamUrl = query.get('stream') || 'webrtc://192.168.2.128/live/livestream';
+        
+        sdk.play(streamUrl)
+            .then(() => {
+                //App.postMessage('playStarted');
+            })
+            .catch(err => {
+                console.error('播放失败:', err);
+                App.postMessage('playFailed');
+                video.remove();
+            });
+    }
+
+    // 页面加载初始化
+    if(document.readyState === 'complete') {
+        initPlayer();
+    } else {
+        window.addEventListener('load', initPlayer);
+    }
+
+    // 播放状态监测
+    let isFirstFrame = false;
+    video.addEventListener('playing', () => {
+        if (!isFirstFrame) {
+            isFirstFrame = true;
+            App.postMessage('firstFrame');
+        }
+    });
+
+    // 错误处理
+    video.addEventListener('error', (e) => {
+        App.postMessage('playerError:' + e.target.error.code);
+    });
+
+    // 尺寸适应
+    window.addEventListener('resize', () => {
+        const scale = Math.min(
+            window.innerWidth / video.videoWidth,
+            window.innerHeight / video.videoHeight
+        );
+        video.style.transform = `scale(${scale})`;
+    });
+})();
+</script>
+</body>
+</html>
