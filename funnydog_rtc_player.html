@@ -31,22 +31,12 @@
     let sdk = null;
     const video = document.getElementById('rtc_media_player');
 
-    
-    // 暴露给Flutter的全局播放方法
-    window.startPlay = function() {
-        if (!sdk) {
-            initPlayer();ß
-        }
-        video.play();
-        video.muted = false;
-    };
 
     // 初始化播放器（不自动播放）
     function initPlayer() {
         video.muted = true;
         sdk = new SrsRtcPlayerAsync();
         video.srcObject = sdk.stream;
-
 
         const query = new URLSearchParams(location.search);
         const streamUrl = query.get('stream') || 'webrtc://192.168.2.128/live/livestream';
@@ -61,6 +51,44 @@
                 video.remove();
             });
     }
+
+    
+    // 暴露给Flutter的全局播放方法
+    window.startPlay = function() {
+        if (!sdk) {
+            initPlayer();ß
+        }
+        video.play();
+        video.muted = false;
+        video.volume = 0.5;
+    };
+
+    window.pause = function() {
+        if (!sdk) {
+            return
+        }
+        video.pause();
+    };
+
+    window.resume = function() {
+        if (!sdk) {
+            return
+        }
+        video.muted = false;
+        video.play();
+    };
+
+    // 暴露音量控制方法
+    window.setMuted = function(muted) {
+        video.muted = !!muted;
+        App.postMessage(`muteState:${video.muted}`);
+    };
+
+    window.setVolume = function(volume) {
+        const validVolume = Math.min(1, Math.max(0, volume));
+        video.volume = validVolume;
+        App.postMessage(`volumeChange:${validVolume}`);
+    };
 
     // 增加销毁方法
     window.cleanupPlayer = function() {
