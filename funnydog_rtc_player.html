@@ -31,6 +31,17 @@
     let sdk = null;
     const video = document.getElementById('rtc_media_player');
 
+    function getStreamUrl() {
+        const query = new URLSearchParams(location.search);
+        const streamUrl = query.get('stream');
+        if (!streamUrl) {
+            console.error('缺少必填参数: stream');
+            App.postMessage('error:Missing stream parameter');
+            throw new Error('Missing stream parameter');
+        }
+        return streamUrl;
+    }
+
 
     // 初始化播放器（不自动播放）
     function initPlayer() {
@@ -39,17 +50,24 @@
         video.srcObject = sdk.stream;
 
         const query = new URLSearchParams(location.search);
-        const streamUrl = query.get('stream') || 'webrtc://192.168.2.128/live/livestream';
-        
-        sdk.play(streamUrl)
-            .then(() => {
-                //App.postMessage('playStarted');
-            })
-            .catch(err => {
-                console.error('播放失败:', err);
-                App.postMessage('playFailed');
-                video.remove();
-            });
+        const streamUrl = getStreamUrl();
+
+        try {
+            const streamUrl = getStreamUrl();
+            sdk.play(streamUrl)
+                .then(() => {
+                    App.postMessage('playInitialized');
+                })
+                .catch(err => {
+                    console.error('播放失败:', err);
+                    App.postMessage('playFailed:' + err.message);
+                    video.remove();
+                });
+        } catch (err) {
+            console.error('初始化错误:', err);
+            App.postMessage('playFailed:' + err.message);
+            video.remove();
+        }
     }
 
     
