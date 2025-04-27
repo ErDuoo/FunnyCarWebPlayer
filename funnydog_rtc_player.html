@@ -62,12 +62,42 @@
             });
     }
 
+    // 增加销毁方法
+    window.cleanupPlayer = function() {
+        if (sdk) {
+            sdk.close(); // 调用SDK的关闭方法
+            sdk = null;
+        }
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+        video.remove();
+    };
+
+    // 监听页面卸载事件
+    window.addEventListener('beforeunload', () => {
+        cleanupPlayer();
+        App.postMessage('pageUnload');
+    });
+
     // 页面加载初始化
     if(document.readyState === 'complete') {
         initPlayer();
     } else {
         window.addEventListener('load', initPlayer);
     }
+
+    // 错误处理
+    video.addEventListener('error', (e) => {
+        App.postMessage('playerError:' + e.target.error.code);
+    });
+
+
+    //视频开始播放时
+    video.addEventListener('play', (e) => {
+        App.postMessage('play');
+    });
 
     // 播放状态监测
     let isFirstFrame = false;
@@ -76,11 +106,42 @@
             isFirstFrame = true;
             App.postMessage('firstFrame');
         }
+        App.postMessage('playing');
     });
 
-    // 错误处理
-    video.addEventListener('error', (e) => {
-        App.postMessage('playerError:' + e.target.error.code);
+    //视频暂停时
+    video.addEventListener('pause', (e) => {
+        App.postMessage('pause');
+    });
+
+    //视频播放结束时
+    video.addEventListener('ended', (e) => {
+        App.postMessage('ended');
+    });
+
+    //开始跳转播放位置时
+    video.addEventListener('seeking', (e) => {
+        App.postMessage('seeking');
+    });
+
+    //开始跳转播放位置时
+    video.addEventListener('seeked', (e) => {
+        App.postMessage('seeked');
+    });
+
+    //开始加载视频资源时
+    video.addEventListener('loadstart', (e) => {
+        App.postMessage('loadstart');
+    });
+
+    //因缓冲不足暂停播放时
+    video.addEventListener('waiting', (e) => {
+        App.postMessage('waiting');
+    });
+
+    //尝试获取数据但无数据到达时
+    video.addEventListener('stalled', (e) => {
+        App.postMessage('stalled');
     });
 
     // 尺寸适应
